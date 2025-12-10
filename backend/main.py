@@ -3,7 +3,21 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from controllers.log_controller import pull_and_save_logs
 from controllers.rag_controller import query_logs
+
+# --- ADD CORS ---
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(title="RAG Log Ingest API")
+
+# Allow frontend at localhost:5173 (Vite)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # or ["http://localhost:5173"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 class RefreshResp(BaseModel):
     ingested: int
@@ -27,6 +41,7 @@ def refresh():
 def root():
     return {"msg": "Use POST /refresh to pull logs"}
 
+
 @app.post("/query")
 def query(data: dict):
     question = data.get("q")
@@ -35,6 +50,8 @@ def query(data: dict):
 
     answer = query_logs(question)
     return {"result": answer}
+
+
 # -------------------------
 # AUTO-START UVICORN HERE
 # -------------------------

@@ -115,3 +115,67 @@ Respond in JSON with fields:
     response = llm.invoke(prompt).content
 
     return response
+
+def health_report():
+    # Get all logs from ChromaDB
+    results = vector_store.get(
+        include=["metadatas", "documents"]
+    )
+
+    logs = results["documents"]
+    metas = results["metadatas"]
+
+    total = len(logs)
+
+    errors = []
+    warnings = []
+    services_with_errors = {}
+    repeated = {}
+
+    for log, meta in zip(logs, metas):
+        text = log.lower()
+
+        # Error classification
+        if "error" in text or "failed" in text:
+            errors.append(log)
+        elif "warn" in text:
+            warnings.append(log)
+
+        # Extract service name (very simple heuristic)
+        m = re.search(r"([a-zA-Z0-9\-\.]+):", log)
+        if m:
+            svc = m.group(1)
+            repeated[svc] = repeated.get(svc, 0) + 1
+
+        # Track services with failures
+        if "error" in text or "failed" in text:
+            services_with_errors[svc] = services_with_errors.get(svc, 0) + 1
+
+    # Top 3 recurring services
+    top_repeated = sorted(repeated.items(), key=lambda x: x[1], reverse=True)[:3]
+
+    # AI summary
+    llm = ChatOpenAI(model="gpt-4o-mini")
+    summary = llm.invoke(
+        f"""
+        Analyze these system logs and give a short server health assessment.
+
+        Total logs: {total}
+        Errors: {len(errors)}
+        Warnings: {len(warnings)}
+        Services with error counts: {services_with_errors}
+        Repeated patterns: {top_repeated}
+
+        Return a concise summary in 4–5 sentences.
+        """
+    ).content
+
+    return {
+        "total_logs": total,
+        "errors": len(errors),
+        "warnings": len(warnings),
+        "services_with_errors": services_with_errors,
+        "top_repeated_patterns": top_repeated,
+        "llm_summary": summary
+    }
+

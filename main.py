@@ -1,8 +1,8 @@
 # main.py
 from fastapi import FastAPI
 from pydantic import BaseModel
-from aws.log_controller import pull_and_save_logs
-
+from controllers.log_controller import pull_and_save_logs
+from controllers.rag_controller import query_logs
 app = FastAPI(title="RAG Log Ingest API")
 
 class RefreshResp(BaseModel):
@@ -27,7 +27,14 @@ def refresh():
 def root():
     return {"msg": "Use POST /refresh to pull logs"}
 
+@app.post("/query")
+def query(data: dict):
+    question = data.get("q")
+    if not question:
+        return {"error": "Missing field 'q'"}
 
+    answer = query_logs(question)
+    return {"result": answer}
 # -------------------------
 # AUTO-START UVICORN HERE
 # -------------------------

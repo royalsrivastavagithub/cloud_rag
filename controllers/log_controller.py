@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 
 # NEW: import our embedding + Chroma storage helper
-from aws.vector_controller import embed_and_store
+from controllers.vector_controller import embed_and_store
 
 load_dotenv()
 

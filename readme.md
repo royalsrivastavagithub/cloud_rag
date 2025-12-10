@@ -1,6 +1,4 @@
----
-
-# **CloudRAG – AI-Powered EC2 Log Analysis Using RAG**
+**CloudRAG – AI-Powered EC2 Log Analysis Using RAG**
 
 CloudRAG is a lightweight, end-to-end Retrieval-Augmented Generation (RAG) system designed to analyze EC2 instance logs using CloudWatch, OpenAI embeddings, ChromaDB, and FastAPI.
 

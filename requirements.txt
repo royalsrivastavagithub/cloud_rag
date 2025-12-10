@@ -2,3 +2,8 @@ fastapi
 uvicorn[standard]
 boto3
 python-dotenv
+chromadb
+langchain-core 
+langchain-community
+langchain-openai
+langchain-chroma

@@ -6,6 +6,9 @@ import boto3
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 
+# NEW: import our embedding + Chroma storage helper
+from aws.vector_controller import embed_and_store
+
 load_dotenv()
 
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
@@ -65,14 +68,13 @@ def pull_cloudwatch_events(start_time_ms=None):
 
 
 # -------------------------------
-# Main Pull & Save Controller
+# Main Pull + Save + Embed
 # -------------------------------
 def pull_and_save_logs():
-    """Pull latest logs from CloudWatch and append to aws_logs/log.txt"""
+    """Pull latest logs from CloudWatch, save them, embed them, store in ChromaDB."""
     last_ts = read_last_ts()
 
     if last_ts is None:
-        # first run = pull last N minutes
         dt = datetime.now(timezone.utc) - timedelta(minutes=DEFAULT_LOOKBACK_MIN)
         start_ms = int(dt.timestamp() * 1000)
     else:
@@ -91,6 +93,7 @@ def pull_and_save_logs():
         iso = datetime.fromtimestamp(ts / 1000, tz=timezone.utc).isoformat()
         log_stream = e.get("logStreamName", "-")
 
+        # Final cleaned log line
         line = f"{iso} | {log_stream} | {message}"
 
         to_write.append(line)
@@ -99,10 +102,22 @@ def pull_and_save_logs():
         if ts > max_ts:
             max_ts = ts
 
+    # -------------------------------------------
+    # SAVE + EMBED
+    # -------------------------------------------
     if to_write:
         with open(LOG_FILE, "a", encoding="utf-8") as f:
             for line in to_write:
                 f.write(line + "\n")
+
+                # Metadata for Chroma vector DB
+                metadata = {
+                    "timestamp": line.split(" | ")[0],
+                    "log_stream": line.split(" | ")[1],
+                }
+
+                # 🔥 Embed + Store in ChromaDB
+                embed_and_store(line, metadata)
 
         write_last_ts(max_ts)
 

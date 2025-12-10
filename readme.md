@@ -1,4 +1,3 @@
-Understood — here is a **clean, professional README.md** with **no emojis**, fully formatted in Markdown.
 
 ---
 
@@ -6,81 +5,26 @@ Understood — here is a **clean, professional README.md** with **no emojis**, f
 
 CloudRAG is a lightweight, end-to-end Retrieval-Augmented Generation (RAG) system designed to analyze EC2 instance logs using CloudWatch, OpenAI embeddings, ChromaDB, and FastAPI.
 
-It allows you to pull logs from AWS and ask natural-language questions such as:
+It allows natural-language log analysis such as:
 
-* "Which service failed?"
-* "What error code appears in the logs?"
-* "Did postgres fail today?"
+* “Which service failed?”
+* “What error code appears in the logs?”
+* “Did postgres fail today?”
 
-This project demonstrates real-world integration of AWS, vector databases, LangChain components, and modern LLMs.
+This project demonstrates a real-world integration of AWS logging pipelines, vector search, LangChain components, and LLM reasoning.
 
 ---
 
 # Features
 
-* Pull EC2 logs directly from CloudWatch
-* Store logs locally for inspection
-* Embed logs using OpenAI embeddings
-* Store embeddings in ChromaDB
-* Query logs using natural language with RAG-based retrieval
-* FastAPI backend providing `/refresh` and `/query` endpoints
-* Clean architecture and minimal dependencies
-
----
-
-# Setup Instructions
-
-## 1. Clone the repository
-
-```bash
-git clone <your-repo-url>
-cd cloud_rag
-```
-
-## 2. Create and activate a Python virtual environment
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-## 3. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-Minimal working dependencies:
-
-```
-fastapi
-uvicorn[standard]
-boto3
-python-dotenv
-chromadb
-langchain-openai
-langchain-chroma
-openai
-```
-
----
-
-# Environment Variables
-
-Create a `.env` file in the project root:
-
-```
-AWS_REGION=us-east-1
-CLOUDWATCH_LOG_GROUP=/ec2/logs/RAG
-
-# OpenAI API key for embeddings + completion model
-OPENAI_API_KEY=your_openai_api_key_here
-
-# Optional: CloudWatch lookback window (minutes)
-DEFAULT_LOOKBACK_MIN=10
-```
-
-Ensure `.env` is included in `.gitignore`.
+* Pull EC2 logs directly from CloudWatch.
+* Store logs locally for inspection.
+* Embed logs using OpenAI embeddings.
+* Store vector embeddings in ChromaDB.
+* Natural-language log search using RAG retrieval.
+* FastAPI backend with `/refresh` and `/query` endpoints.
+* React-based frontend dashboard.
+* Clean architecture and minimal dependencies.
 
 ---
 
@@ -89,32 +33,61 @@ Ensure `.env` is included in `.gitignore`.
 ```
 cloud_rag/
 │
-├── aws/
-│   ├── log_controller.py       # Pull logs from CloudWatch
-│   ├── vector_controller.py    # Embed logs + store in ChromaDB
-│   └── rag_controller.py       # RAG retrieval + LLM reasoning
+├── backend/
+│   ├── controllers/
+│   │   ├── log_controller.py      # Pull logs from CloudWatch
+│   │   ├── vector_controller.py   # OpenAI embeddings + Chroma storage
+│   │   └── rag_controller.py      # Retrieval + LLM reasoning
+│   ├── aws_logs/                  # Ignored - raw logs
+│   ├── vector_db/                 # Ignored - Chroma DB files
+│   ├── main.py                    # FastAPI server
+│   └── requirements.txt
 │
-├── aws_logs/                   # Ignored local log storage
-├── vector_db/                  # Ignored ChromaDB vector store
+├── frontend/
+│   ├── src/App.jsx                # React UI
+│   ├── src/App.css
+│   └── vite.config.js
 │
-├── main.py                     # FastAPI entrypoint
-├── requirements.txt
-└── .env
+├── .env                           # Environment variables
+└── Dockerfile
 ```
 
-Folders `aws_logs/` and `vector_db/` are runtime-only and should not be committed.
+Folders `backend/aws_logs/` and `backend/vector_db/` are runtime-only and must remain in `.gitignore`.
 
 ---
 
-# Running the Application
+# Environment Variables
 
-Start the FastAPI server:
+Create a `.env` file inside **backend/**:
+
+```
+AWS_REGION=us-east-1
+CLOUDWATCH_LOG_GROUP=/ec2/logs/RAG
+
+OPENAI_API_KEY=your_openai_api_key_here
+DEFAULT_LOOKBACK_MIN=10
+```
+
+---
+
+# Installing & Running Backend
+
+## 1. Create virtual environment
+
+```bash
+cd backend
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+## 2. Start FastAPI server
 
 ```bash
 python main.py
 ```
 
-The API will be available at:
+Server runs at:
 
 ```
 http://localhost:8000
@@ -124,7 +97,7 @@ http://localhost:8000
 
 # API Usage
 
-## 1. Pull latest logs from CloudWatch
+## 1. Refresh logs from CloudWatch
 
 ```
 POST /refresh
@@ -136,7 +109,7 @@ Example:
 curl -X POST http://localhost:8000/refresh
 ```
 
-Example response:
+Response:
 
 ```json
 {
@@ -146,10 +119,6 @@ Example response:
   "status": "success"
 }
 ```
-
-This step fetches logs, stores them, embeds them, and inserts them into ChromaDB.
-
----
 
 ## 2. Query logs using natural language
 
@@ -162,71 +131,125 @@ Example:
 ```bash
 curl -X POST http://localhost:8000/query \
   -H "Content-Type: application/json" \
-  -d '{"q": "What is the error code mentioned in the logs?"}'
+  -d '{"q": "What is the error code?"}'
 ```
 
-Example response:
+Response:
 
 ```json
 {
   "result": {
     "answer": "YES",
-    "evidence": [
-      "root: RAG_TEST_12345: The backup service encountered exit code 17"
-    ]
+    "evidence": ["... extracted log line ..."]
   }
 }
 ```
 
 ---
 
-# Testing With a Custom Log Event
+# React Frontend (Vite + React + JavaScript)
 
-On your EC2 instance:
+A simple UI to:
+
+* Trigger `/refresh`
+* Ask questions via `/query`
+* Display structured answers & evidence
+
+## Install and run:
 
 ```bash
-sudo logger "RAG_TEST_12345: The backup service encountered exit code 17"
+cd frontend
+npm install
+npm run dev
 ```
 
-Then:
+Frontend runs at:
 
-1. Call `/refresh`
-2. Query:
-   `"What is the error code?"`
-   `"Did the backup service fail?"`
+```
+http://localhost:5173
+```
+
+### CORS
+
+Backend includes permissive CORS rules:
+
+```python
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
 
 ---
 
-# Potential Improvements
+# Running With Docker
 
-The following features can expand and enhance the system:
+## Build the image
 
-### Retrieval & Reasoning
+```bash
+docker build -t cloudrag-backend ./backend
+```
 
-* Time-based filtering (last hour, last 10 minutes)
-* Structured output formatting without relying on the LLM
-* Summaries of logs by severity (INFO, WARN, ERROR)
+## Run the container
 
-### Observability Enhancements
+```bash
+docker run -p 8000:8000 --env-file .env cloudrag-backend
+```
 
-* Automatic detection of failing or restarting systemd services
-* Endpoint summarizing overall system health
-* Detection of repeated patterns or anomalies
+Backend now runs inside Docker.
 
-### UI / Frontend
+---
 
-* Web dashboard for logs, queries, and visual insights
-* Real-time updates and auto-refreshing interface
+# Testing the Pipeline End-to-End
 
-### Automation
+### On EC2 instance (log generator):
 
-* Background job to auto-run `/refresh` on a schedule
-* SNS/SQS/Slack alerts when errors appear
+```bash
+sudo logger "RAG_TEST_12345: Backup service failed with exit code 17"
+```
 
-### Deployment
+### Step 1: Refresh logs
 
-* Containerize using Docker
-* Deploy on ECS, EC2, or Kubernetes
-* Use Chroma Cloud or Pinecone for scalable vector storage
+```bash
+curl -X POST http://localhost:8000/refresh
+```
+
+### Step 2: Query logs
+
+```bash
+curl -X POST http://localhost:8000/query \
+  -H "Content-Type: application/json" \
+  -d '{"q": "What failed in the backup service?"}'
+```
+
+---
+
+# Improving the Project (Future Additions)
+
+### Retrieval & LLM Improvements
+
+* Multi-turn questions
+* Time-filtered retrieval (last 15 min, 1 hour)
+* Log severity classification (INFO/WARN/ERROR)
+
+### Observability Features
+
+* Detect frequent restarts / anomalies
+* Summaries of critical issues
+* Automatic alerts (SNS, Slack)
+
+### Frontend Enhancements
+
+* System health dashboard
+* Search history
+* Filter logs by service or instance
+
+### Infrastructure
+
+* Deploy backend and frontend using Docker Compose
+* ECS/Kubernetes deployment
+* Use managed vector DB (Pinecone / Chroma Cloud)
 
 ---

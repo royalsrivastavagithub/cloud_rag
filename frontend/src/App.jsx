@@ -1,156 +1,115 @@
-import { useState } from 'react';
-import './App.css';
+import React, { useState } from "react";
+import "./App.css";
 
-function App() {
-  const [refreshResult, setRefreshResult] = useState(null);
-  const [query, setQuery] = useState('');
+export default function App() {
+  const [query, setQuery] = useState("");
   const [queryResult, setQueryResult] = useState(null);
+  const [summary, setSummary] = useState(null);
+  const [health, setHealth] = useState(null);
+  const [errors, setErrors] = useState(null);
+  const [refreshStatus, setRefreshStatus] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
-  // Helper: Clean markdown-wrapped JSON
-  const parseLLMJson = (resultString) => {
-    if (!resultString || typeof resultString !== "string") return null;
+  const API = "http://localhost:8000";
 
+  async function callAPI(endpoint, method = "GET", body = null) {
+    setLoading(true);
     try {
-      const cleaned = resultString
-        .replace(/```json/g, "")
-        .replace(/```/g, "")
-        .trim();
-
-      return JSON.parse(cleaned);
+      const res = await fetch(`${API}${endpoint}`, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: body ? JSON.stringify(body) : null
+      });
+      return await res.json();
     } catch (err) {
-      console.error("Failed to parse JSON from LLM:", err);
-      return null;
-    }
-  };
-
-  const handleRefresh = async () => {
-    setLoading(true);
-    setError(null);
-    setRefreshResult(null);
-    setQueryResult(null);
-
-    try {
-      const response = await fetch('http://localhost:8000/refresh', {
-        method: 'POST',
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setRefreshResult(data);
-
-    } catch (e) {
-      setError(e.message);
+      console.error(err);
+      return { error: "Request failed" };
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const handleQuerySubmit = async (e) => {
-    e.preventDefault();
-    if (!query.trim()) return;
+  async function runQuery() {
+    setQueryResult(await callAPI("/query", "POST", { q: query }));
+  }
 
-    setLoading(true);
-    setError(null);
-    setRefreshResult(null);
-    setQueryResult(null);
+  async function runSummary() {
+    setSummary(await callAPI("/summary"));
+  }
 
-    try {
-      const response = await fetch('http://localhost:8000/query', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ q: query }),
-      });
+  async function runHealth() {
+    setHealth(await callAPI("/health"));
+  }
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+  async function runErrors() {
+    setErrors(await callAPI("/errors"));
+  }
 
-      const data = await response.json();
-      console.log("QUERY RAW RESPONSE:", data);
-
-      const parsed = parseLLMJson(data.result);
-      console.log("PARSED JSON:", parsed);
-
-      setQueryResult(parsed);
-
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  async function runRefresh() {
+    setRefreshStatus(await callAPI("/refresh", "POST"));
+  }
 
   return (
-    <div className="App">
-      <header className="header">CloudRAG – Log Intelligence</header>
+    <div className="container">
+      <h1 className="title">CloudRAG – Log Analysis Dashboard</h1>
 
-      <section className="feature-section">
-        <h2>Refresh Logs</h2>
-        <p>Click the button to ingest the latest logs from CloudWatch.</p>
-        <button onClick={handleRefresh} disabled={loading}>
-          {loading ? 'Refreshing...' : 'Refresh Logs'}
-        </button>
-      </section>
+      {loading && <p className="loading">⏳ Loading...</p>}
 
-      <section className="feature-section">
-        <h2>Query Logs</h2>
-        <form onSubmit={handleQuerySubmit} className="query-form">
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Enter your question..."
-            disabled={loading}
-          />
-          <button type="submit" disabled={loading}>
-            {loading ? 'Querying...' : 'Submit Query'}
-          </button>
-        </form>
-      </section>
+      {/* Query Section */}
+      <div className="card">
+        <h2>Ask a question about logs</h2>
 
-      <section className="results-section">
-        <h2>Results</h2>
+        <input
+          className="input"
+          placeholder="e.g. Why did Postgres crash?"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
 
-        {loading && <p>Loading...</p>}
-        {error && <p className="error-message">Error: {error}</p>}
-
-        {refreshResult && (
-          <div>
-            <h3>Refresh Status</h3>
-            <pre>{JSON.stringify(refreshResult, null, 2)}</pre>
-          </div>
-        )}
+        <button className="btn" onClick={runQuery}>Query Logs</button>
 
         {queryResult && (
-          <div>
-            <h3>Answer</h3>
-            <p>{queryResult?.answer || "No answer returned."}</p>
-
-            <h3>Evidence</h3>
-            {Array.isArray(queryResult?.evidence) &&
-            queryResult.evidence.length > 0 ? (
-              <ul className="evidence-list">
-                {queryResult.evidence.map((item, index) => (
-                  <li key={index} className="evidence-item">{item}</li>
-                ))}
-              </ul>
-            ) : (
-              <p>No evidence available.</p>
-            )}
-          </div>
+          <pre className="pre">{JSON.stringify(queryResult, null, 2)}</pre>
         )}
+      </div>
 
-        {!loading && !error && !refreshResult && !queryResult && (
-          <p>Results from your actions will appear here.</p>
+      {/* Summary */}
+      <div className="card">
+        <h2>Log Summary</h2>
+        <button className="btn" onClick={runSummary}>Get Summary</button>
+        {summary && (
+          <pre className="pre">{JSON.stringify(summary, null, 2)}</pre>
         )}
-      </section>
+      </div>
+
+      {/* Health */}
+      <div className="card">
+        <h2>Health Report</h2>
+        <button className="btn" onClick={runHealth}>Get Health Status</button>
+        {health && (
+          <pre className="pre">{JSON.stringify(health, null, 2)}</pre>
+        )}
+      </div>
+
+      {/* Error Logs */}
+      <div className="card">
+        <h2>Error Logs</h2>
+        <button className="btn" onClick={runErrors}>Get Errors</button>
+        {errors && (
+          <pre className="pre">{JSON.stringify(errors, null, 2)}</pre>
+        )}
+      </div>
+
+      {/* Ingest Logs */}
+      <div className="card">
+        <h2>Pull & Ingest Logs</h2>
+        <button className="btn refresh" onClick={runRefresh}>
+          Refresh Logs
+        </button>
+        {refreshStatus && (
+          <pre className="pre">{JSON.stringify(refreshStatus, null, 2)}</pre>
+        )}
+      </div>
     </div>
   );
 }
-
-export default App;

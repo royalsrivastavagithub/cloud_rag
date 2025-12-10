@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from controllers.log_controller import pull_and_save_logs
 from controllers.rag_controller import query_logs
-
+from controllers.rag_controller import summary_logs
 # --- ADD CORS ---
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -35,6 +35,10 @@ def refresh():
         to_ts=to_ts,
         status="success"
     )
+
+@app.get("/summary")
+def summary():
+    return summary_logs()
 
 
 @app.get("/")

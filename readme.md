@@ -1,5 +1,4 @@
-
----
+--- 
 
 # CloudRAG – AI-Powered EC2 Log Analysis Using RAG
 
@@ -22,7 +21,7 @@ This project demonstrates a real-world integration of AWS logging pipelines, vec
 * Embed logs using OpenAI embeddings.
 * Store vector embeddings in ChromaDB.
 * Natural-language log search using RAG retrieval.
-* FastAPI backend with `/refresh` and `/query` endpoints.
+* FastAPI backend with endpoints for refresh, query, summary, health, and errors.
 * React-based frontend dashboard.
 * Clean architecture and minimal dependencies.
 
@@ -48,7 +47,8 @@ cloud_rag/
 │   ├── src/App.css
 │   └── vite.config.js
 │
-├── .env                           # Environment variables
+├── .env                           # Used for local backend execution
+├── docker-compose.yml             # Docker compose for running project
 └── Dockerfile
 ```
 
@@ -61,37 +61,53 @@ Folders `backend/aws_logs/` and `backend/vector_db/` are runtime-only and must r
 Create a `.env` file inside **backend/**:
 
 ```
-AWS_REGION=us-east-1
-CLOUDWATCH_LOG_GROUP=/ec2/logs/RAG
-
-OPENAI_API_KEY=your_openai_api_key_here
-DEFAULT_LOOKBACK_MIN=10
+AWS_ACCESS_KEY_ID=access-key-here
+AWS_SECRET_ACCESS_KEY=secret-access-key-here
+AWS_REGION=region-here
+OPENAI_API_KEY=openai-api-key-here
 ```
+This `.env` file is used when running the backend directly. For Docker, you may need to pass environment variables differently.
 
 ---
 
-# Installing & Running Backend
+# Getting Started
 
-## 1. Create virtual environment
+There are two ways to run the project: using Docker Compose (recommended) or running the backend and frontend separately.
+
+## Using Docker Compose (Recommended)
+This is the easiest way to get started. It will build and run both the backend and frontend containers.
+
+1.  **Ensure you have Docker and Docker Compose installed.**
+2.  **Start the services:**
+    ```bash
+    docker-compose up --build
+    ```
+    - The backend API will be available at `http://localhost:8000`.
+    - The frontend application will be available at `http://localhost:8080`.
+
+## Running Locally
+
+### 1. Run the Backend
 
 ```bash
 cd backend
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-```
-
-## 2. Start FastAPI server
-
-```bash
 python main.py
 ```
+The backend server runs at `http://localhost:8000`.
 
-Server runs at:
+### 2. Run the Frontend
 
+```bash
+cd frontend
+npm install
+npm run dev
 ```
-http://localhost:8000
-```
+The frontend application runs at `http://localhost:5173`.
+
+Note: The backend includes permissive CORS rules to allow the frontend to connect from `localhost:5173`.
 
 ---
 
@@ -145,61 +161,78 @@ Response:
 }
 ```
 
----
+## 3. Get a Log Summary
+Provides a high-level summary of the latest logs.
 
-# React Frontend (Vite + React + JavaScript)
+```
+GET /summary
+```
 
-A simple UI to:
-
-* Trigger `/refresh`
-* Ask questions via `/query`
-* Display structured answers & evidence
-
-## Install and run:
-
+Example:
 ```bash
-cd frontend
-npm install
-npm run dev
+curl http://localhost:8000/summary
+```
+Response:
+```json
+{
+  "total_logs_analyzed": 20,
+  "errors": 5,
+  "warnings": 2,
+  "top_services": ["ssm-agent", "cron", "systemd"],
+  "latest_timestamp": "...",
+  "llm_summary": "The system is showing multiple errors related to the ssm-agent. Cron jobs are running as expected, but there are some warnings from systemd."
+}
 ```
 
-Frontend runs at:
+## 4. Get a Health Report
+Provides a health report of the system based on all stored logs.
 
 ```
-http://localhost:5173
+GET /health
 ```
-
-### CORS
-
-Backend includes permissive CORS rules:
-
-```python
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-```
-
----
-
-# Running With Docker
-
-## Build the image
-
+Example:
 ```bash
-docker build -t cloudrag-backend ./backend
+curl http://localhost:8000/health
+```
+Response:
+```json
+{
+    "total_logs": 150,
+    "errors": 10,
+    "warnings": 25,
+    "services_with_errors": {
+        "ssm-agent": 8,
+        "postgres": 2
+    },
+    "top_repeated_patterns": [
+        ["ssm-agent", 50],
+        ["systemd", 30],
+        ["cron", 20]
+    ],
+    "llm_summary": "The system health is degraded due to a high number of errors from the ssm-agent. Postgres also shows some failures. Other services appear to be running normally."
+}
 ```
 
-## Run the container
+## 5. Get Error Logs
+Retrieves all logs that are classified as errors.
 
+```
+GET /errors
+```
+Example:
 ```bash
-docker run -p 8000:8000 --env-file .env cloudrag-backend
+curl http://localhost:8000/errors
 ```
-
-Backend now runs inside Docker.
-
+Response:
+```json
+{
+    "count": 2,
+    "errors": [
+        "2025-12-10T10:00:00Z some-service: ERROR: Failed to connect to database.",
+        "2025-12-10T10:05:00Z another-service: Failure in processing job 123."
+    ]
+}
+```
 ---
 
 # Testing the Pipeline End-to-End

@@ -5,6 +5,8 @@ from controllers.log_controller import pull_and_save_logs
 from controllers.rag_controller import query_logs
 from controllers.rag_controller import summary_logs
 from controllers.rag_controller import health_report
+from controllers.rag_controller import get_error_logs
+
 # --- ADD CORS ---
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -60,6 +62,11 @@ def query(data: dict):
 def health():
     report = health_report()
     return report
+
+@app.get("/errors")
+def errors():
+    return get_error_logs()
+
 
 
 # -------------------------

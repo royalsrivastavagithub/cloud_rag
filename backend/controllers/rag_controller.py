@@ -179,3 +179,28 @@ def health_report():
         "llm_summary": summary
     }
 
+def get_error_logs():
+    log_file = "./aws_logs/log.txt"
+    if not os.path.exists(log_file):
+        return {"count": 0, "errors": []}
+
+    errors = []
+    error_patterns = [
+        r"ERROR",
+        r"Error",
+        r"Failed",
+        r"failure",
+        r"exit code [1-9]\d*"   # non-zero exit codes
+    ]
+
+    combined_pattern = re.compile("|".join(error_patterns), re.IGNORECASE)
+
+    with open(log_file, "r", encoding="utf-8") as f:
+        for line in f:
+            if combined_pattern.search(line):
+                errors.append(line.strip())
+
+    return {
+        "count": len(errors),
+        "errors": errors
+    }

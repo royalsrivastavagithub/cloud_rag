@@ -1,20 +1,20 @@
---- 
+---
 
-# CloudRAG – AI-Powered EC2 Log Analysis Using RAG
+# **CloudRAG – AI-Powered EC2 Log Analysis Using RAG**
 
 CloudRAG is a lightweight, end-to-end Retrieval-Augmented Generation (RAG) system designed to analyze EC2 instance logs using CloudWatch, OpenAI embeddings, ChromaDB, and FastAPI.
 
-It allows natural-language log analysis such as:
+It enables natural-language log analysis such as:
 
 * “Which service failed?”
 * “What error code appears in the logs?”
-* “Did postgres fail today?”
+* “Did Postgres fail today?”
 
-This project demonstrates a real-world integration of AWS logging pipelines, vector search, LangChain components, and LLM reasoning.
+This project demonstrates real-world integration of AWS logging pipelines, vector search, LangChain components, and LLM reasoning.
 
 ---
 
-# Features
+# **Features**
 
 * Pull EC2 logs directly from CloudWatch.
 * Store logs locally for inspection.
@@ -23,11 +23,11 @@ This project demonstrates a real-world integration of AWS logging pipelines, vec
 * Natural-language log search using RAG retrieval.
 * FastAPI backend with endpoints for refresh, query, summary, health, and errors.
 * React-based frontend dashboard.
-* Clean architecture and minimal dependencies.
+* Clean architecture with minimal dependencies.
 
 ---
 
-# Project Structure
+# **Project Structure**
 
 ```
 cloud_rag/
@@ -37,8 +37,8 @@ cloud_rag/
 │   │   ├── log_controller.py      # Pull logs from CloudWatch
 │   │   ├── vector_controller.py   # OpenAI embeddings + Chroma storage
 │   │   └── rag_controller.py      # Retrieval + LLM reasoning
-│   ├── aws_logs/                  # Ignored - raw logs
-│   ├── vector_db/                 # Ignored - Chroma DB files
+│   ├── aws_logs/                  # Raw logs (ignored)
+│   ├── vector_db/                 # Chroma DB files (ignored)
 │   ├── main.py                    # FastAPI server
 │   └── requirements.txt
 │
@@ -47,18 +47,18 @@ cloud_rag/
 │   ├── src/App.css
 │   └── vite.config.js
 │
-├── .env                           # Used for local backend execution
-├── docker-compose.yml             # Docker compose for running project
+├── .env                           # Local backend environment variables
+├── docker-compose.yml             # Docker Compose for full stack
 └── Dockerfile
 ```
 
-Folders `backend/aws_logs/` and `backend/vector_db/` are runtime-only and must remain in `.gitignore`.
+`backend/aws_logs/` and `backend/vector_db/` are runtime-only and must remain in `.gitignore`.
 
 ---
 
-# Environment Variables
+# **Environment Variables**
 
-Create a `.env` file inside **backend/**:
+Create a `.env` file in **backend/**:
 
 ```
 AWS_ACCESS_KEY_ID=access-key-here
@@ -66,28 +66,39 @@ AWS_SECRET_ACCESS_KEY=secret-access-key-here
 AWS_REGION=region-here
 OPENAI_API_KEY=openai-api-key-here
 ```
-This `.env` file is used when running the backend directly. For Docker, you may need to pass environment variables differently.
+
+This file is used for local backend execution.
+For Docker, environment variables may need to be passed differently (e.g., via Compose).
 
 ---
 
-# Getting Started
+# **Getting Started**
 
-There are two ways to run the project: using Docker Compose (recommended) or running the backend and frontend separately.
+You can run the project via Docker Compose (recommended) or run the backend and frontend manually.
 
-## Using Docker Compose (Recommended)
-This is the easiest way to get started. It will build and run both the backend and frontend containers.
+---
 
-1.  **Ensure you have Docker and Docker Compose installed.**
-2.  **Start the services:**
-    ```bash
-    docker-compose up --build
-    ```
-    - The backend API will be available at `http://localhost:8000`.
-    - The frontend application will be available at `http://localhost:8080`.
+## **Using Docker Compose (Recommended)**
 
-## Running Locally
+This method builds and runs both the backend and frontend containers.
 
-### 1. Run the Backend
+1. Ensure Docker and Docker Compose are installed.
+2. Start the services:
+
+   ```bash
+   docker-compose up --build
+   ```
+
+Services will be available at:
+
+* **Backend API:** `http://localhost:8000`
+* **Frontend UI:** `http://localhost:8080`
+
+---
+
+## **Running Locally**
+
+### **1. Run the Backend**
 
 ```bash
 cd backend
@@ -96,24 +107,26 @@ source venv/bin/activate
 pip install -r requirements.txt
 python main.py
 ```
-The backend server runs at `http://localhost:8000`.
 
-### 2. Run the Frontend
+Backend runs at `http://localhost:8000`.
+
+### **2. Run the Frontend**
 
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-The frontend application runs at `http://localhost:5173`.
 
-Note: The backend includes permissive CORS rules to allow the frontend to connect from `localhost:5173`.
+Frontend runs at `http://localhost:5173`.
+
+The backend includes permissive CORS rules to allow requests from this port.
 
 ---
 
-# API Usage
+# **API Usage**
 
-## 1. Refresh logs from CloudWatch
+## **1. Refresh Logs from CloudWatch**
 
 ```
 POST /refresh
@@ -136,7 +149,9 @@ Response:
 }
 ```
 
-## 2. Query logs using natural language
+---
+
+## **2. Query Logs Using Natural Language**
 
 ```
 POST /query
@@ -161,18 +176,22 @@ Response:
 }
 ```
 
-## 3. Get a Log Summary
-Provides a high-level summary of the latest logs.
+---
+
+## **3. Get a Log Summary**
 
 ```
 GET /summary
 ```
 
 Example:
+
 ```bash
 curl http://localhost:8000/summary
 ```
+
 Response:
+
 ```json
 {
   "total_logs_analyzed": 20,
@@ -180,76 +199,87 @@ Response:
   "warnings": 2,
   "top_services": ["ssm-agent", "cron", "systemd"],
   "latest_timestamp": "...",
-  "llm_summary": "The system is showing multiple errors related to the ssm-agent. Cron jobs are running as expected, but there are some warnings from systemd."
+  "llm_summary": "The system is showing multiple errors related to the ssm-agent..."
 }
 ```
 
-## 4. Get a Health Report
-Provides a health report of the system based on all stored logs.
+---
+
+## **4. Get a Health Report**
 
 ```
 GET /health
 ```
+
 Example:
+
 ```bash
 curl http://localhost:8000/health
 ```
+
 Response:
+
 ```json
 {
-    "total_logs": 150,
-    "errors": 10,
-    "warnings": 25,
-    "services_with_errors": {
-        "ssm-agent": 8,
-        "postgres": 2
-    },
-    "top_repeated_patterns": [
-        ["ssm-agent", 50],
-        ["systemd", 30],
-        ["cron", 20]
-    ],
-    "llm_summary": "The system health is degraded due to a high number of errors from the ssm-agent. Postgres also shows some failures. Other services appear to be running normally."
+  "total_logs": 150,
+  "errors": 10,
+  "warnings": 25,
+  "services_with_errors": {
+    "ssm-agent": 8,
+    "postgres": 2
+  },
+  "top_repeated_patterns": [
+    ["ssm-agent", 50],
+    ["systemd", 30],
+    ["cron", 20]
+  ],
+  "llm_summary": "The system health is degraded due to a high number of errors..."
 }
 ```
 
-## 5. Get Error Logs
-Retrieves all logs that are classified as errors.
+---
+
+## **5. Retrieve Only Error Logs**
 
 ```
 GET /errors
 ```
+
 Example:
+
 ```bash
 curl http://localhost:8000/errors
 ```
+
 Response:
+
 ```json
 {
-    "count": 2,
-    "errors": [
-        "2025-12-10T10:00:00Z some-service: ERROR: Failed to connect to database.",
-        "2025-12-10T10:05:00Z another-service: Failure in processing job 123."
-    ]
+  "count": 2,
+  "errors": [
+    "2025-12-10T10:00:00Z some-service: ERROR: Failed to connect to database.",
+    "2025-12-10T10:05:00Z another-service: Failure in processing job 123."
+  ]
 }
 ```
+
 ---
 
-# Testing the Pipeline End-to-End
+# **Testing the End-to-End Pipeline**
 
-### On EC2 instance (log generator):
+### **Generate a test log on an EC2 instance:**
 
 ```bash
 sudo logger "RAG_TEST_12345: Backup service failed with exit code 17"
 ```
 
-### Step 1: Refresh logs
+### **Step 1: Refresh logs**
 
 ```bash
 curl -X POST http://localhost:8000/refresh
 ```
 
-### Step 2: Query logs
+### **Step 2: Query logs**
 
 ```bash
 curl -X POST http://localhost:8000/query \
@@ -259,30 +289,24 @@ curl -X POST http://localhost:8000/query \
 
 ---
 
-# Improving the Project (Future Additions)
+# **Future Improvements**
 
-### Retrieval & LLM Improvements
+### **Retrieval & LLM Enhancements**
 
-* Multi-turn questions
-* Time-filtered retrieval (last 15 min, 1 hour)
-* Log severity classification (INFO/WARN/ERROR)
+* Multi-turn questions.
+* Time-based retrieval (e.g., last 15 minutes, last hour).
+* Log severity classification (INFO/WARN/ERROR).
 
-### Observability Features
+### **Observability Features**
 
-* Detect frequent restarts / anomalies
-* Summaries of critical issues
-* Automatic alerts (SNS, Slack)
+* Detect frequent restarts or anomalies.
+* Summaries of critical issues.
+* Alerting via SNS or Slack.
 
-### Frontend Enhancements
+### **Frontend Enhancements**
 
-* System health dashboard
-* Search history
-* Filter logs by service or instance
-
-### Infrastructure
-
-* Deploy backend and frontend using Docker Compose
-* ECS/Kubernetes deployment
-* Use managed vector DB (Pinecone / Chroma Cloud)
+* Interactive system health dashboard.
+* Search history.
+* Filter logs by service or instance.
 
 ---

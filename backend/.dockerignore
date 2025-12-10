@@ -1,0 +1,56 @@
+# Prevent copying virtual environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Build & distribution artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+wheels/
+
+# Node / frontend dependencies
+frontend/node_modules/
+frontend/dist/
+
+# Local logs / vector DB (never needed in Docker image)
+aws_logs/
+vector_db/
+
+# Environment & secrets
+.env
+.envrc
+.pypirc
+.streamlit/secrets.toml
+
+# Editor / IDE config
+.vscode/
+.idea/
+.spyproject/
+.ropeproject/
+
+# Python tooling caches
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+.pytype/
+.pyre/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Docker build metadata
+Dockerfile*
+docker-compose*.yml
+
+# Misc
+*.log

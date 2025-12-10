@@ -1,0 +1,29 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies (will be installed fresh inside Docker)
+node_modules
+
+# Build output (generated in Docker, not needed in context)
+dist
+dist-ssr
+
+# Local config overrides
+*.local
+
+# OS / Editor files
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

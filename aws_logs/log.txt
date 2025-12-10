@@ -1,0 +1,8 @@
+2025-12-10T06:45:05.620000+00:00 | syslog | 2025-12-10T06:45:01.367400+00:00 ip-172-31-8-77 CRON[2039]: (root) CMD (command -v debian-sa1 > /dev/null && debian-sa1 1 1)
+2025-12-10T06:45:56.837000+00:00 | syslog | 2025-12-10T06:45:56.616539+00:00 ip-172-31-8-77 systemd[1]: Starting systemd-tmpfiles-clean.service - Cleanup of Temporary Directories...
+2025-12-10T06:45:56.837000+00:00 | syslog | 2025-12-10T06:45:56.723050+00:00 ip-172-31-8-77 systemd[1]: systemd-tmpfiles-clean.service: Deactivated successfully.
+2025-12-10T06:46:01.621000+00:00 | syslog | 2025-12-10T06:45:56.724133+00:00 ip-172-31-8-77 systemd[1]: Finished systemd-tmpfiles-clean.service - Cleanup of Temporary Directories.
+2025-12-10T06:50:38.582000+00:00 | syslog | 2025-12-10T06:50:38.442505+00:00 ip-172-31-8-77 systemd[1]: Starting sysstat-collect.service - system activity accounting tool...
+2025-12-10T06:50:38.582000+00:00 | syslog | 2025-12-10T06:50:38.450506+00:00 ip-172-31-8-77 systemd[1]: sysstat-collect.service: Deactivated successfully.
+2025-12-10T06:50:42.620000+00:00 | syslog | 2025-12-10T06:50:38.450753+00:00 ip-172-31-8-77 systemd[1]: Finished sysstat-collect.service - system activity accounting tool.
+2025-12-10T06:52:21.621000+00:00 | syslog | 2025-12-10T06:52:16.643640+00:00 ip-172-31-8-77 root: HELLO FROM UBUNTU CLOUDWATCH TEST

@@ -9,7 +9,7 @@ load_dotenv()
 from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
 
-DB_DIR = "./vector_db"
+DB_DIR = "./temp/vector_db"
 os.makedirs(DB_DIR, exist_ok=True)
 
 # Initialize embedding model

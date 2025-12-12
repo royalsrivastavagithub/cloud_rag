@@ -14,7 +14,7 @@ emb = OpenAIEmbeddings(api_key=os.getenv("OPENAI_API_KEY"))
 db = Chroma(
     collection_name="logs",
     embedding_function=emb,
-    persist_directory="./vector_db",
+    persist_directory="./temp/vector_db",
 )
 
 # Chat model (can use gpt-4o-mini or gpt-4o)

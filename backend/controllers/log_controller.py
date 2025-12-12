@@ -15,7 +15,7 @@ AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 LOG_GROUP = os.getenv("CLOUDWATCH_LOG_GROUP", "/ec2/logs/RAG")
 DEFAULT_LOOKBACK_MIN = int(os.getenv("DEFAULT_LOOKBACK_MIN", "10"))
 
-AWS_DIR = "./aws_logs"
+AWS_DIR = "./temp/aws_logs"
 LOG_FILE = os.path.join(AWS_DIR, "log.txt")
 LAST_TS_FILE = os.path.join(AWS_DIR, "last_ts.txt")
 

@@ -261,25 +261,3 @@ curl -X POST http://localhost:8000/agent \
 
 ---
 
-# Future Improvements
-
-## Retrieval and LLM Enhancements
-
-* Multi-turn conversational memory.
-* Time-based retrieval (last X minutes/hours).
-* Classification of logs by severity.
-
-## Observability Features
-
-* Detect frequent restarts or recurring error patterns.
-* Timeline-based incident reporting.
-* Integration with SNS, Slack, or PagerDuty alerts.
-
-## Frontend Enhancements
-
-* Service-level dashboards.
-* Log filtering and faceted search.
-* Error heatmaps and charts.
-
----
-

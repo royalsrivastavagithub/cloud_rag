@@ -1,13 +1,19 @@
 # main.py
 from fastapi import FastAPI
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
+
+# Controllers (sync functions)
 from controllers.log_controller import pull_and_save_logs
-from controllers.rag_controller import query_logs
-from controllers.rag_controller import summary_logs
-from controllers.rag_controller import health_report
-from controllers.rag_controller import get_error_logs
+from controllers.rag_controller import (
+    query_logs,
+    summary_logs,
+    health_report,
+    get_error_logs,
+)
 from controllers.agent_controller import run_agent
-# --- ADD CORS ---
+
+# CORS
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="RAG Log Ingest API")
@@ -15,7 +21,7 @@ app = FastAPI(title="RAG Log Ingest API")
 # Allow frontend at localhost:5173 (Vite)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # or ["http://localhost:5173"]
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -28,12 +34,18 @@ class RefreshResp(BaseModel):
     to_ts: int | None
     status: str
 
+
 class AgentQuery(BaseModel):
     query: str
 
+
+# ---------------------------
+# Async Endpoints
+# ---------------------------
+
 @app.post("/refresh", response_model=RefreshResp)
-def refresh():
-    ingested, from_ts, to_ts = pull_and_save_logs()
+async def refresh():
+    ingested, from_ts, to_ts = await run_in_threadpool(pull_and_save_logs)
     return RefreshResp(
         ingested=ingested,
         from_ts=from_ts,
@@ -41,41 +53,47 @@ def refresh():
         status="success"
     )
 
+
 @app.get("/summary")
-def summary():
-    return summary_logs()
+async def summary():
+    return await run_in_threadpool(summary_logs)
 
 
 @app.get("/")
-def root():
+async def root():
     return {"msg": "Use POST /refresh to pull logs"}
 
 
 @app.post("/query")
-def query(data: dict):
+async def query(data: dict):
     question = data.get("q")
     if not question:
         return {"error": "Missing field 'q'"}
 
-    answer = query_logs(question)
+    answer = await run_in_threadpool(query_logs, question)
     return {"result": answer}
 
+
 @app.get("/health")
-def health():
-    report = health_report()
-    return report
+async def health():
+    return await run_in_threadpool(health_report)
+
 
 @app.get("/errors")
-def errors():
-    return get_error_logs()
+async def errors():
+    return await run_in_threadpool(get_error_logs)
 
 
 @app.post("/agent")
 async def agent_api(body: AgentQuery):
-    response = run_agent(body.query)
+    # run_agent is sync → move to thread
+    response = await run_in_threadpool(run_agent, body.query)
     return {"response": response}
 
 
+# ---------------------------
+# Start Server
+# ---------------------------
 if __name__ == "__main__":
     import uvicorn
     print("Starting FastAPI server at http://0.0.0.0:8000 ...")
@@ -85,4 +103,3 @@ if __name__ == "__main__":
         port=8000,
         reload=True
     )
-    print(" FastAPI server stopped")

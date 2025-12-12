@@ -6,7 +6,7 @@ from controllers.rag_controller import query_logs
 from controllers.rag_controller import summary_logs
 from controllers.rag_controller import health_report
 from controllers.rag_controller import get_error_logs
-
+from controllers.agent_controller import run_agent
 # --- ADD CORS ---
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -28,6 +28,8 @@ class RefreshResp(BaseModel):
     to_ts: int | None
     status: str
 
+class AgentQuery(BaseModel):
+    query: str
 
 @app.post("/refresh", response_model=RefreshResp)
 def refresh():
@@ -68,10 +70,12 @@ def errors():
     return get_error_logs()
 
 
+@app.post("/agent")
+async def agent_api(body: AgentQuery):
+    response = run_agent(body.query)
+    return {"response": response}
 
-# -------------------------
-# AUTO-START UVICORN HERE
-# -------------------------
+
 if __name__ == "__main__":
     import uvicorn
     print("Starting FastAPI server at http://0.0.0.0:8000 ...")
